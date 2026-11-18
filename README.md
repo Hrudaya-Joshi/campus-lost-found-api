@@ -120,3 +120,4 @@ kubectl get pods -l app=campus-lost-found-api
 kubectl scale deployment campus-lost-found-api --replicas=3
 kubectl get pods -l app=campus-lost-found-api
 ```
+DevOps CI verification update.
