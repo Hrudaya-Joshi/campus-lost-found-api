@@ -1,0 +1,12 @@
+---
+# Campus Lost & Found API Deployment Playbook
+- name: Deploy Campus Lost & Found API
+  hosts: lostfound_servers
+  gather_facts: true
+  vars:
+    app_port: 8080
+    app_name: "campus-lost-found-api"
+    use_systemd: false
+    check_health: true
+  roles:
+    - role: lostfound_api

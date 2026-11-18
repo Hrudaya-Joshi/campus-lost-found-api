@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campus-lost-found-api
+  labels:
+    app: campus-lost-found-api
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: campus-lost-found-api
+  template:
+    metadata:
+      labels:
+        app: campus-lost-found-api
+        tier: backend
+    spec:
+      containers:
+        - name: campus-lost-found-api
+          # Replace <DOCKERHUB_USERNAME> with your Docker Hub username
+          image: DOCKERHUB_USERNAME_PLACEHOLDER/campus-lost-found-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          # Deployment Enhancement: Health Probes using /health
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3

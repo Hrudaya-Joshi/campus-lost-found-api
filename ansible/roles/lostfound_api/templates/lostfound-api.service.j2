@@ -1,0 +1,16 @@
+[Unit]
+Description=Campus Lost & Found Spring Boot Service
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+WorkingDirectory={{ app_install_dir }}
+ExecStart={{ java_bin_path }} {{ jvm_memory_opts }} -jar {{ jar_dest_file }} --spring.config.additional-location=file:{{ app_install_dir }}/config/application.properties
+SuccessExitStatus=143
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

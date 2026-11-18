@@ -1,0 +1,6 @@
+# Campus Lost & Found API - Repository Information
+# Configure your remote repository using:
+# git remote add origin https://github.com/<your-username>/campus-lost-found-api.git
+#
+# Replace the placeholder URL below with your active repository link:
+GITHUB_REPOSITORY_URL=https://github.com/<your-username>/campus-lost-found-api.git

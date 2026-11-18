@@ -1,0 +1,26 @@
+---
+# Handlers for lostfound_api role
+- name: Restart lostfound_api service
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+    state: restarted
+    daemon_reload: true
+  when: use_systemd | bool
+
+- name: Restart lostfound_api user service
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+    state: restarted
+    scope: user
+    daemon_reload: true
+  when: not (use_systemd | bool) and (systemd_user_available | default(false))
+
+- name: Restart lostfound_api process
+  ansible.builtin.shell: |
+    if [ -f "{{ app_install_dir }}/app.pid" ]; then
+      kill -9 $(cat "{{ app_install_dir }}/app.pid") 2>/dev/null || true
+      rm -f "{{ app_install_dir }}/app.pid"
+    fi
+    nohup {{ java_bin_path }} {{ jvm_memory_opts }} -jar {{ jar_dest_file }} --spring.config.additional-location=file:{{ app_install_dir }}/config/application.properties </dev/null > {{ app_install_dir }}/app.log 2>&1 &
+    echo $! > "{{ app_install_dir }}/app.pid"
+  when: not (use_systemd | bool) and not (systemd_user_available | default(false))

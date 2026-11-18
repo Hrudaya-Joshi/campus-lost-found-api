@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: campus-lost-found-api-service
+  labels:
+    app: campus-lost-found-api
+spec:
+  type: NodePort
+  selector:
+    app: campus-lost-found-api
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
+      name: http

@@ -1,0 +1,94 @@
+---
+# Tasks for lostfound_api role
+
+- name: Verify Java 17 runtime is available
+  ansible.builtin.command: "{{ java_bin_path }} -version"
+  register: java_check
+  changed_when: false
+  failed_when: java_check.rc != 0
+
+- name: Display Java version info
+  ansible.builtin.debug:
+    msg: "Java runtime detected: {{ java_check.stderr_lines | default(java_check.stdout_lines) | first }}"
+
+- name: Ensure application install directory exists
+  ansible.builtin.file:
+    path: "{{ app_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure application config directory exists
+  ansible.builtin.file:
+    path: "{{ app_install_dir }}/config"
+    state: directory
+    mode: '0755'
+
+- name: Copy Spring Boot executable JAR to install directory
+  ansible.builtin.copy:
+    src: "{{ jar_source_file }}"
+    dest: "{{ jar_dest_file }}"
+    mode: '0755'
+  notify:
+    - Restart lostfound_api service
+    - Restart lostfound_api process
+
+- name: Deploy application.properties from Jinja2 template
+  ansible.builtin.template:
+    src: application.properties.j2
+    dest: "{{ app_install_dir }}/config/application.properties"
+    mode: '0644'
+  notify:
+    - Restart lostfound_api service
+    - Restart lostfound_api process
+
+- name: Check systemd availability
+  ansible.builtin.command: systemctl is-system-running
+  register: systemctl_check
+  changed_when: false
+  failed_when: false
+
+- name: Set systemd availability fact
+  ansible.builtin.set_fact:
+    systemd_detected: "{{ systemctl_check.rc == 0 or 'running' in systemctl_check.stdout or 'degraded' in systemctl_check.stdout }}"
+
+- name: Deploy systemd service unit file (if root or systemd enabled)
+  ansible.builtin.template:
+    src: lostfound-api.service.j2
+    dest: "/etc/systemd/system/{{ service_name }}.service"
+    mode: '0644'
+  when: use_systemd | bool
+  notify: Restart lostfound_api service
+
+- name: Ensure systemd service is enabled and started
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: use_systemd | bool
+
+- name: Start application in background (standalone user mode)
+  ansible.builtin.shell: |
+    if [ -f "{{ app_install_dir }}/app.pid" ]; then
+      kill -9 $(cat "{{ app_install_dir }}/app.pid") 2>/dev/null || true
+      rm -f "{{ app_install_dir }}/app.pid"
+    fi
+    nohup {{ java_bin_path }} {{ jvm_memory_opts }} -jar {{ jar_dest_file }} --spring.config.additional-location=file:{{ app_install_dir }}/config/application.properties </dev/null > {{ app_install_dir }}/app.log 2>&1 &
+    echo $! > "{{ app_install_dir }}/app.pid"
+  when: not (use_systemd | bool)
+
+- name: Wait for Lost & Found API to respond on configured port
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ app_port }}/health"
+    method: GET
+    status_code: 200
+  register: health_result
+  until: health_result.status == 200
+  retries: 15
+  delay: 2
+  when: check_health | default(true) | bool
+
+- name: Display health check response
+  ansible.builtin.debug:
+    msg: "Lost & Found API is healthy on port {{ app_port }}: {{ health_result.json | default(health_result) }}"
+  when: check_health | default(true) | bool

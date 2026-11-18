@@ -1,0 +1,15 @@
+---
+# Default variables for lostfound_api role
+app_name: "campus-lost-found-api"
+app_port: 8080
+app_user: "{{ ansible_facts['user_id'] | default('lostfound') }}"
+app_group: "{{ ansible_facts['user_id'] | default('lostfound') }}"
+app_install_dir: "{{ ansible_facts['env']['HOME'] | default('/opt') }}/{{ app_name }}"
+jar_source_file: "{{ playbook_dir }}/../target/{{ app_name }}-0.0.1-SNAPSHOT.jar"
+jar_dest_file: "{{ app_install_dir }}/{{ app_name }}.jar"
+java_package: "openjdk-17-jre-headless"
+java_bin_path: "/usr/bin/java"
+jvm_memory_opts: "-Xms128m -Xmx256m"
+service_name: "{{ app_name }}"
+use_systemd: false
+check_health: true
