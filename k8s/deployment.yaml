@@ -19,8 +19,8 @@ spec:
       containers:
         - name: campus-lost-found-api
           # Replace <DOCKERHUB_USERNAME> with your Docker Hub username
-          image: DOCKERHUB_USERNAME_PLACEHOLDER/campus-lost-found-api:latest
-          imagePullPolicy: IfNotPresent
+          image: hrudayasj/campus-lost-found-api:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
